@@ -20,8 +20,8 @@ def forward ( array ) :
 
 	for j in range ( m ) :
 
-		array[   j   ] = u[j] + w * v[j]
-		array[ m + j ] = u[j] - w * v[j]
+		array[   j   ] = ( u[j] + w * v[j] ) / 2
+		array[ m + j ] = ( u[j] - w * v[j] ) / 2
 		w *= z
 
 def backward ( array ) :
@@ -43,8 +43,8 @@ def backward ( array ) :
 
 	for j in range ( m ) :
 
-		array[   j   ] = 2 * ( u[j] + w * v[j] )
-		array[ m + j ] = 2 * ( u[j] - w * v[j] )
+		array[   j   ] = ( u[j] + w * v[j] ) * 2
+		array[ m + j ] = ( u[j] - w * v[j] ) * 2
 		w *= z
 
 def mul ( p , q ) :
@@ -52,10 +52,10 @@ def mul ( p , q ) :
 	m = len( p )
 	n = len( q )
 
-	k = 2 ** ceil( log( m + n ) )
+	k = 2 ** ceil( log( m + n , 2 ) )
 
-	u = p + [ complex( ) ] * ( k - m )
-	v = q + [ complex( ) ] * ( k - n )
+	u = p + [ complex( 0 ) ] * ( k - m )
+	v = q + [ complex( 0 ) ] * ( k - n )
 
 	forward( u )
 	forward( v )
@@ -65,3 +65,116 @@ def mul ( p , q ) :
 	backward( r )
 
 	return r
+
+def read ( string ) :
+
+	tokens = string.split( "+" )
+
+	terms = [ ]
+
+	for token in tokens :
+
+		parts = map( int , token.split( "x^" ) )
+		coefficient = complex( next( parts ) )
+		exponent = next( parts , 0 )
+
+		terms.append( ( coefficient , exponent ) )
+
+	terms = sorted( terms , key = lambda t : t[1] )
+
+	degree = terms[-1][1]
+
+	coefficients = [ complex( 0 ) ] * ( degree + 1 )
+
+	for coefficient , exponent in terms :
+
+		coefficients[exponent] = coefficient
+
+	return coefficients
+
+def write ( array , e = 1e-6 ) :
+
+	n = len( array )
+
+	s = [ ]
+
+	for i , a in enumerate( array ) :
+
+		a = a.real
+
+		if abs( a ) < e : continue
+
+		elif not a : continue
+
+		elif i == 0 : s.append( str( a ) )
+
+		elif i == 1 : s.append( str( a ) + "x" )
+
+		else : s.append( str( a ) + "x^" + str( i ) )
+
+	return " + ".join( reversed( s ) )
+
+def add ( p , q ) :
+
+	m = len( p )
+	n = len( q )
+
+	if m < n : return add( q , p )
+
+	return [ p[i] + q[i] for i in range( n ) ] + p[n:]
+
+def sub ( p , q ) :
+
+	m = len( p )
+	n = len( q )
+
+	if m < n : return [ -a for a in sub( q , p ) ]
+
+	return [ p[i] - q[i] for i in range( n ) ] + p[n:]
+
+
+class Polynomial ( object ) :
+
+	def __init__ ( self , args ) :
+
+		if isinstance ( args , str ) :
+
+			self.coefficients = read( args )
+
+		else :
+
+			self.coefficients = args
+
+	def __len__ ( self ) :
+
+		return len( self.coefficients )
+
+	def __str__ ( self ) :
+
+		return write( self.coefficients )
+
+	def __add__ ( self , other ) :
+
+		return Polynomial( add( self.coefficients , other.coefficients ) )
+
+	def __sub__ ( self , other ) :
+
+		return Polynomial( sub( self.coefficients , other.coefficients ) )
+
+	def __mul__ ( self , other ) :
+
+		return Polynomial( mul( self.coefficients , other.coefficients ) )
+
+
+def main ( ) :
+
+	p = Polynomial( "1x^2 + 2x^1 + 1" )
+	q = Polynomial( "25x^4 + -3x^1" )
+
+	print( "(%s) + (%s) = %s" % ( p , q , p + q ) )
+	print( "(%s) - (%s) = %s" % ( p , q , p - q ) )
+	print( "(%s) * (%s) = %s" % ( p , q , p * q ) )
+	print( "(%s) * (%s) = %s" % ( p , p , p * p ) )
+	print( "(%s) * (%s) = %s" % ( q , q , q * q ) )
+
+if __name__ == "__main__" : main( )
