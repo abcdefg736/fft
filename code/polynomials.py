@@ -114,24 +114,6 @@ def write ( array , e = 1e-6 ) :
 
 	return " + ".join( reversed( s ) )
 
-def add ( p , q ) :
-
-	m = len( p )
-	n = len( q )
-
-	if m < n : return add( q , p )
-
-	return [ p[i] + q[i] for i in range( n ) ] + p[n:]
-
-def sub ( p , q ) :
-
-	m = len( p )
-	n = len( q )
-
-	if m < n : return [ -a for a in sub( q , p ) ]
-
-	return [ p[i] - q[i] for i in range( n ) ] + p[n:]
-
 
 class Polynomial ( object ) :
 
@@ -153,28 +135,20 @@ class Polynomial ( object ) :
 
 		return write( self.coefficients )
 
-	def __add__ ( self , other ) :
-
-		return Polynomial( add( self.coefficients , other.coefficients ) )
-
-	def __sub__ ( self , other ) :
-
-		return Polynomial( sub( self.coefficients , other.coefficients ) )
-
 	def __mul__ ( self , other ) :
 
 		return Polynomial( mul( self.coefficients , other.coefficients ) )
 
 
-def main ( ) :
+def main ( p , q ) :
 
-	p = Polynomial( "1x^2 + 2x^1 + 1" )
-	q = Polynomial( "25x^4 + -3x^1" )
+	p = Polynomial( p )
+	q = Polynomial( q )
 
-	print( "(%s) + (%s) = %s" % ( p , q , p + q ) )
-	print( "(%s) - (%s) = %s" % ( p , q , p - q ) )
 	print( "(%s) * (%s) = %s" % ( p , q , p * q ) )
-	print( "(%s) * (%s) = %s" % ( p , p , p * p ) )
-	print( "(%s) * (%s) = %s" % ( q , q , q * q ) )
 
-if __name__ == "__main__" : main( )
+if __name__ == "__main__" :
+
+	import sys
+	main( *sys.argv[1:] )
+
