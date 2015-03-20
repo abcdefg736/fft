@@ -1,15 +1,51 @@
 
 from math import pi , cos , sin , ceil , log
 
-p = 337
-z = 85
-_z = 226
 b = 10
 
-x = 169
-y = 2
+W = 16
+p = 2**W+1
 
-def forward ( array ) :
+def inverse ( z , p ) :
+
+	return z ** ( p - 2 ) % p
+
+def generator ( p ) :
+
+	for z in range ( 2 , p ) :
+
+		w = z
+
+		for k in range ( 2 , p - 1 ) :
+
+			w *= z
+			w %= p
+
+			if w == 1 : break
+
+		else : return z
+
+
+z = generator( p )
+_z = inverse( z , p )
+
+y = 2
+x = inverse( y , p )
+
+def table ( z , n ) :
+
+	T = [ None ] * n
+
+	T[n-1] = z
+
+	for i in range( n-2 , -1 , -1 ) : T[i] = T[i+1] ** 2 % p
+
+	return T
+
+Z = table( z , W )
+_Z = table( _z , W )
+
+def forward ( array , l ) :
 
 	n = len( array )
 
@@ -20,8 +56,8 @@ def forward ( array ) :
 	u = [ array[   2 * j   ] for j in range( m ) ]
 	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
 
-	forward( u )
-	forward( v )
+	forward( u , l - 1 )
+	forward( v , l - 1 )
 
 	w = 1
 
@@ -29,10 +65,10 @@ def forward ( array ) :
 
 		array[   j   ] = x * ( u[j] + w * v[j] ) % p
 		array[ m + j ] = x * ( u[j] - w * v[j] ) % p
-		w *= ( ( z ** ( 8 // n ) ) % p )
+		w *= Z[l]
 		w %= p
 
-def backward ( array ) :
+def backward ( array , l ) :
 
 	n = len( array )
 
@@ -43,8 +79,8 @@ def backward ( array ) :
 	u = [ array[   2 * j   ] for j in range( m ) ]
 	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
 
-	backward( u )
-	backward( v )
+	backward( u , l - 1 )
+	backward( v , l - 1 )
 
 	w = 1
 
@@ -52,7 +88,7 @@ def backward ( array ) :
 
 		array[   j   ] = y * ( u[j] + w * v[j] ) % p
 		array[ m + j ] = y * ( u[j] - w * v[j] ) % p
-		w *= ( ( _z ** ( 8 // n ) ) % p )
+		w *= _Z[l]
 		w %= p
 
 def mul ( first , second ) :
@@ -60,24 +96,18 @@ def mul ( first , second ) :
 	m = len( first )
 	n = len( second )
 
-	k = 2 ** ceil( log( m + n , 2 ) )
+	l = ceil( log( m + n , 2 ) )
+	k = 2**l
 
 	u = first + [ 0 ] * ( k - m )
 	v = second + [ 0 ] * ( k - n )
 
-	forward( u )
-	forward( v )
-
-	print( u )
-	print( v )
+	forward( u , l - 1 )
+	forward( v , l - 1 )
 
 	r = [ ( u[j] * v[j] ) % p for j in range( k ) ]
 
-	print( r )
-
-	backward( r )
-
-	print( r )
+	backward( r , l - 1 )
 
 	for i in range( k - 1 ) :
 
@@ -126,9 +156,6 @@ def main ( first , second ) :
 
 	first = Integer( first )
 	second = Integer( second )
-
-	print( first , first.limbs )
-	print( second , second.limbs )
 
 	print( "(%s) * (%s) = %s" % ( first , second , first * second ) )
 
