@@ -29,7 +29,7 @@ def generator ( p ) :
 z = generator( p )
 _z = inverse( z , p )
 
-N = [ inverse( 2**l , p ) for l in range( W ) ]
+N = inverse( 2 , p )
 
 def table ( z , n ) :
 
@@ -85,8 +85,8 @@ def ifft ( array , l ) :
 
 	for j in range ( m ) :
 
-		array[   j   ] = N[l] * ( u[j] + w * v[j] ) % p
-		array[ m + j ] = N[l] * ( u[j] - w * v[j] ) % p
+		array[   j   ] = N * ( u[j] + w * v[j] ) % p
+		array[ m + j ] = N * ( u[j] - w * v[j] ) % p
 		w *= _Z[l]
 		w %= p
 
