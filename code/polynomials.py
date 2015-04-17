@@ -1,27 +1,67 @@
 
 from math import pi , cos , sin , ceil , log
 
-def fft ( array ) :
+def fft ( p ) :
 
-	n = len( array )
+	"""
+		Evaluates the polynomial p(x) of degree n-1 in the n nth roots of unity
+		in O(n log n) time.
 
+		It does so recursively by distributing the coefficients of p(x) over
+		two polynomials of degree n/2-1. Suppose 2 divides n and let m = n / 2.
+		Let
+			p(x) = a_0 x^0 + a_1 x^1 + ... + a_{2m-1} x^{2m-1}
+		then define
+			u(x) = a_0 x^0 + a_2 x^1 + a_4 x^2 + ... + a_{2m-2} x^{m-1}
+		and
+			v(x) = a_1 x^0 + a_3 x^1 + a_5 x^2 + ... + a_{2m-1} x^{m-1}.
+		u(x) and v(x) are both of degree m-1 and p(x) = u(x^2) + x v(x^2).
+
+		Suppose our algorithm works, then we are able to evaluate u(x) and v(x) in the m mth
+		roots of unity. To each mth root of unity z corresponds two nth roots of unity
+		sqrt(z) and -sqrt(z). Hence we can evaluate p(x) for all nth roots of unity by
+		letting
+			p(sqrt(z)) = u(z) + sqrt(z) v(z)
+		and
+			p(-sqrt(z)) = u(z) - sqrt(z) v(z).
+		When n = 1, p(x) = a_0 and evaluating it for any x yields a_0.
+
+		The recurrence relation is T(n) = 2 T(n/2) + O(n) and by the master
+		theorem: T(n) = O(n log n).
+	"""
+
+	# The polynomial p(x) is represented as a list of coefficients
+	# [ a_0 , a_1 , ... , a_{n-1} ].
+	# The size of this list is the number of coefficients.
+	n = len( p )
+
+	# We have seen that in the base case evaluating p(x) of degree 0 yields
+	# a_0. For a polynomial of degree 0 we want its evaluation for the first
+	# root of unity, i.e. 1, which is unique. We thus simply return a_0.
 	if n == 1 : return
 
+	# m is n divided by 2
 	m = n // 2
 
-	u = [ array[   2 * j   ] for j in range( m ) ]
-	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
+	# We construct u(x) and v(x).
+	u = [ p[   2 * j   ] for j in range( m ) ]
+	v = [ p[ 2 * j + 1 ] for j in range( m ) ]
 
+	# The recursion fairy evaluates u and v for us.
 	fft( u )
 	fft( v )
 
+	# We will enumerate all the nth roots of unity starting with w = (-)1 and then
+	# just multiplying w by the ( positive ) primitive nth root of unity z.
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , sin( 2 * pi / n ) )
 
+	# At each step of the loop we will yield p(w) and p(-w). There are m steps
+	# times 2 roots which gives us 2m = n roots.
 	for j in range ( m ) :
 
-		array[   j   ] = u[j] + w * v[j]
-		array[ m + j ] = u[j] - w * v[j]
+		p[   j   ] = u[j] + w * v[j]
+		p[ m + j ] = u[j] - w * v[j]
 		w *= z
 
 def ifft ( array ) :
