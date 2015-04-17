@@ -10,7 +10,7 @@ def fft ( p ) :
 		It does so recursively by distributing the coefficients of p(x) over
 		two polynomials of degree n/2-1. Suppose 2 divides n and let m = n / 2.
 		Let
-			p(x) = a_0 x^0 + a_1 x^1 + ... + a_{2m-1} x^{2m-1}
+			p(x) = a_0 x^0 + a_1 x^1 + a_2 x^2 + ... + a_{2m-1} x^{2m-1}
 		then define
 			u(x) = a_0 x^0 + a_2 x^1 + a_4 x^2 + ... + a_{2m-2} x^{m-1}
 		and
@@ -24,6 +24,7 @@ def fft ( p ) :
 			p(sqrt(z)) = u(z) + sqrt(z) v(z)
 		and
 			p(-sqrt(z)) = u(z) - sqrt(z) v(z).
+
 		When n = 1, p(x) = a_0 and evaluating it for any x yields a_0.
 
 		The recurrence relation is T(n) = 2 T(n/2) + O(n) and by the master
@@ -47,7 +48,7 @@ def fft ( p ) :
 	u = [ p[   2 * j   ] for j in range( m ) ]
 	v = [ p[ 2 * j + 1 ] for j in range( m ) ]
 
-	# The recursion fairy evaluates u and v for us.
+	# The recursion fairy evaluates u(x) and v(x) for us.
 	fft( u )
 	fft( v )
 
@@ -64,27 +65,101 @@ def fft ( p ) :
 		p[ m + j ] = u[j] - w * v[j]
 		w *= z
 
-def ifft ( array ) :
+	# Note that the output has the form
+	# [ p(1) , p(z) , p(z^2) , ... , p(-1) , p(-z) , p(-z^2) , ... ]
+	# which is equivalent to
+	# [ p(z^0) , p(z^1) , p(z^2) , p(z^3) , ... , p(z^{n-1}) ]
 
-	n = len( array )
+def ifft ( p ) :
 
+	"""
+		Interpolates the n data points (x's are the nth roots of unity) in p by
+		the polynomial p(x) of degree n-1 in O(n log n).
+
+		It does so recursively by distributing the data points of p over
+		two data sets of cardinality n/2-1. Suppose 2 divides n and let m = n / 2.
+		Let z be the primitive nth root of unity.
+		Let
+			p = [ ( z^0 , y_0 ) , ( z^1 , y_1 ) , ... , ( z^{2m-1} , y_{2m-1} ) ]
+		then define
+			u = [ ( z^0 , y_0 ) , ( z^2 , y_2 ) , ... , ( z^{2m-2} , y_{2m-2} ) ]
+		and
+			v = [ ( z^0 , y_1 ) , ( z^2 , y_3 ) , ... , ( z^{2m-2} , y_{2m-1} ) ]
+		u and v are both of cardinality m-1. Note that x's of u and v are the
+		mth roots of unity.
+
+		Suppose our algorithm works, then we are able to interpolate u and v by
+		u(x) and v(x). We have
+			u(z^0) = y_0
+			u(z^2) = y_2
+			u(z^4) = y_4
+			...
+		and
+			v(z^0) = y_1
+			v(z^2) = y_3
+			v(z^4) = y_5
+			...
+
+		We can interpolate p for x's being the nth roots of
+		unity by letting
+			p_j = 1/2 ( u_j + v_j / z^j )
+		and
+			p_{m+j} = 1/2 ( u_j - v_j / z^j )
+		because then
+
+		- if j is even,
+		p(z^j) = 1/2 u(z^j) * ( 1 + z^{jm}) + 1/2 sum ( v_j / z^i * z^{ji} ) ( 1 - z^{jm} )
+		       = 1/2 u(z^j) * ( 1 + 1 ) + 1/2 sum ( v_j / z^i * z^{ji} ) ( 1 - 1 )
+		       = u(z^j)
+		       = y_j
+
+		- if j is odd,
+		p(z^j) = 1/2 u(z^j) * ( 1 + z^{jm}) + 1/2 sum ( v_i / z^i * z^{ji} ) ( 1 - z^{jm} )
+		       = 1/2 u(z^j) * ( 1 - 1 ) + 1/2 sum ( v_i / z^i * z^{ji} ) ( 1 + 1 )
+		       = 1/2 u(z^j) * ( 1 - 1 ) + 1/2 sum ( v_i * z^{(j-1)i} ) ( 1 + 1 )
+		       = v(z^{j-1})
+		       = y_j
+
+		When n = 1, p_0 = y_0 because evaluating p(1) must yield y_0 while p
+		has degree 0.
+
+		Again, by the master theorem, T(n) = O(n log n).
+	"""
+
+	# The data points set p as a list of y_j values, x_j values are implicitely
+	# assumed to be the n nth roots of unity [ z^0 , z^1 , ... , z^{n-1} ].
+	# The size of this list is the number of data points.
+	n = len( p )
+
+	# In the case where there is only 1 data point we interpolate it using
+	# p(x) = y_0, a constant function.
 	if n == 1 : return
 
+	# m is n divided by 2
 	m = n // 2
 
-	u = [ array[   2 * j   ] for j in range( m ) ]
-	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
+	# We split p into u and v.
+	u = [ p[   2 * j   ] for j in range( m ) ]
+	v = [ p[ 2 * j + 1 ] for j in range( m ) ]
 
+	# We let the recursion fairy interpolate u and v.
 	ifft( u )
 	ifft( v )
 
+	# We will enumerate all the nth roots of unity inverses starting with w =
+	# (-)1 and then just multiplying w by the ( positive ) primitive nth root
+	# of unity inverse z.
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , - sin( 2 * pi / n ) )
+	#                                ^
+	#                                |- inverse
+	# ( cos + isin ) ( cos - isin ) = cos^2 + sin^2 = 1
 
+	# This loop computes the n coefficients of p(x) in O(n) time.
 	for j in range ( m ) :
 
-		array[   j   ] = ( u[j] + w * v[j] ) / 2
-		array[ m + j ] = ( u[j] - w * v[j] ) / 2
+		p[   j   ] = ( u[j] + w * v[j] ) / 2
+		p[ m + j ] = ( u[j] - w * v[j] ) / 2
 		w *= z
 
 def mul ( p , q ) :
