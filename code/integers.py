@@ -29,8 +29,7 @@ def generator ( p ) :
 z = generator( p )
 _z = inverse( z , p )
 
-y = 2
-x = inverse( y , p )
+N = inverse( 2 , p )
 
 def table ( z , n ) :
 
@@ -63,8 +62,8 @@ def forward ( array , l ) :
 
 	for j in range ( m ) :
 
-		array[   j   ] = x * ( u[j] + w * v[j] ) % p
-		array[ m + j ] = x * ( u[j] - w * v[j] ) % p
+		array[   j   ] = ( u[j] + w * v[j] ) % p
+		array[ m + j ] = ( u[j] - w * v[j] ) % p
 		w *= Z[l]
 		w %= p
 
@@ -86,8 +85,8 @@ def backward ( array , l ) :
 
 	for j in range ( m ) :
 
-		array[   j   ] = y * ( u[j] + w * v[j] ) % p
-		array[ m + j ] = y * ( u[j] - w * v[j] ) % p
+		array[   j   ] = N * ( u[j] + w * v[j] ) % p
+		array[ m + j ] = N * ( u[j] - w * v[j] ) % p
 		w *= _Z[l]
 		w %= p
 

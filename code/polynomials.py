@@ -1,7 +1,7 @@
 
 from math import pi , cos , sin , ceil , log
 
-def forward ( array ) :
+def fft ( array ) :
 
 	n = len( array )
 
@@ -12,19 +12,19 @@ def forward ( array ) :
 	u = [ array[   2 * j   ] for j in range( m ) ]
 	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
 
-	forward( u )
-	forward( v )
+	fft( u )
+	fft( v )
 
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , sin( 2 * pi / n ) )
 
 	for j in range ( m ) :
 
-		array[   j   ] = ( u[j] + w * v[j] ) / 2
-		array[ m + j ] = ( u[j] - w * v[j] ) / 2
+		array[   j   ] = u[j] + w * v[j]
+		array[ m + j ] = u[j] - w * v[j]
 		w *= z
 
-def backward ( array ) :
+def ifft ( array ) :
 
 	n = len( array )
 
@@ -35,16 +35,16 @@ def backward ( array ) :
 	u = [ array[   2 * j   ] for j in range( m ) ]
 	v = [ array[ 2 * j + 1 ] for j in range( m ) ]
 
-	backward( u )
-	backward( v )
+	ifft( u )
+	ifft( v )
 
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , - sin( 2 * pi / n ) )
 
 	for j in range ( m ) :
 
-		array[   j   ] = ( u[j] + w * v[j] ) * 2
-		array[ m + j ] = ( u[j] - w * v[j] ) * 2
+		array[   j   ] = ( u[j] + w * v[j] ) / 2
+		array[ m + j ] = ( u[j] - w * v[j] ) / 2
 		w *= z
 
 def mul ( p , q ) :
@@ -57,12 +57,12 @@ def mul ( p , q ) :
 	u = p + [ complex( 0 ) ] * ( k - m )
 	v = q + [ complex( 0 ) ] * ( k - n )
 
-	forward( u )
-	forward( v )
+	fft( u )
+	fft( v )
 
 	r = [ u[j] * v[j] for j in range( k ) ]
 
-	backward( r )
+	ifft( r )
 
 	return r
 
