@@ -53,7 +53,7 @@ def fft ( p ) :
 	fft( v )
 
 	# We will enumerate all the nth roots of unity starting with w = (-)1 and then
-	# just multiplying w by the ( positive ) primitive nth root of unity z.
+	# just multiplying w by a primitive nth root of unity z.
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , sin( 2 * pi / n ) )
 
@@ -78,7 +78,7 @@ def ifft ( p ) :
 
 		It does so recursively by distributing the data points of p over
 		two data sets of cardinality n/2-1. Suppose 2 divides n and let m = n / 2.
-		Let z be the primitive nth root of unity.
+		Let z be a primitive nth root of unity.
 		Let
 			p = [ ( z^0 , y_0 ) , ( z^1 , y_1 ) , ... , ( z^{2m-1} , y_{2m-1} ) ]
 		then define
@@ -147,7 +147,7 @@ def ifft ( p ) :
 	ifft( v )
 
 	# We will enumerate all the nth roots of unity inverses starting with w =
-	# (-)1 and then just multiplying w by the ( positive ) primitive nth root
+	# (-)1 and then just multiplying w by a primitive nth root
 	# of unity inverse z.
 	w = complex( 1 )
 	z = complex( cos( 2 * pi / n ) , - sin( 2 * pi / n ) )
